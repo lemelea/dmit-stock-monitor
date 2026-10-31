@@ -157,9 +157,19 @@ def collect():
     results = []
     errors = []
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=os.getenv('HEADLESS', '0') == '1', channel='chromium')
-        try:
+        profile = os.getenv('BROWSER_PROFILE')
+        launch = dict(headless=os.getenv('HEADLESS', '0') == '1',
+                      channel=os.getenv('BROWSER_CHANNEL', 'chromium'))
+        if os.getenv('BROWSER_MINIMIZE') == '1':
+            launch['args'] = ['--start-minimized']
+        if profile:
+            context = p.chromium.launch_persistent_context(profile, locale='en-US', **launch)
+            close_browser = context.close
+        else:
+            browser = p.chromium.launch(**launch)
             context = browser.new_context(locale='en-US')
+            close_browser = browser.close
+        try:
             page = context.new_page()
             page.set_default_timeout(45000)
             response = page.goto(CART, wait_until='domcontentloaded', timeout=60000)
@@ -206,7 +216,7 @@ def collect():
                     errors.append(f"{row['title']}: {record['error']}")
                 results.append(record)
         finally:
-            browser.close()
+            close_browser()
     return results, errors
 
 

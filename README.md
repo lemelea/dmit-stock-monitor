@@ -1,8 +1,14 @@
 # DMIT Premium 补货响铃提醒
 
-GitHub Actions 在云端检查 DMIT，iPhone 通过 Bark 响铃。不需要 VPS，电脑可以关机。
+**当前推荐：在你自己的 Windows 11 私有服务器上运行。** 该机器不需要公网地址，但需要开机联网并保持 Windows 账号登录。查看 [Windows 安装说明](Windows使用说明.md)，双击打包后的 `DMITMonitor.exe` 配置。手机通过 Bark 重要警告响铃。
 
-**当前交付状态：代码已上传；需要完成云端 check 和手机 test 两项实测，均通过后才算启用。首次云端检查遇到 HTTP 403，正在验证正常浏览器加载。**
+2026-10-31 实测：Bark 云端推送已成功，用户确认 iPhone 收到并响铃。GitHub 的云端浏览器两次被 DMIT 的 Cloudflare 验证拦截，自动云端库存检查已默认停用。私有 Windows 服务器上的首次网站访问还需由用户运行安装包验证。
+
+下面保留 GitHub 方案的配置参考。若日后验证该运行环境能正常访问 DMIT，需要将仓库 Actions Variable `MONITOR_ENABLED` 设为 `true` 才会启用自动云端检查；手动工作流仍可运行。
+
+GitHub 方案通过 Actions 在云端检查、iPhone 通过 Bark 响铃；只有云端访问验证通过后，才能在不依赖个人电脑的情况下使用。
+
+**GitHub 方案状态：手机响铃实测已通过，库存读取被网站验证拦截，自动云端检查默认停用。当前使用 Windows 私有服务器方案。**
 
 ## 已设置的筛选条件
 

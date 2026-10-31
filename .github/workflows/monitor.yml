@@ -24,6 +24,9 @@ concurrency:
 
 jobs:
   monitor:
+    # GitHub's IP was blocked by the site during validation. Keep automatic
+    # cloud runs off until a working runtime has been verified explicitly.
+    if: github.event_name == 'workflow_dispatch' || vars.MONITOR_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
