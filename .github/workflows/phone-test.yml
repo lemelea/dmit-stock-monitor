@@ -1,0 +1,23 @@
+name: Bark Phone Test
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/phone-test.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-phone:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Send clearly labelled test alarm
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+        run: python3 monitor.py --mode test

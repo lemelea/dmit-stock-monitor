@@ -1,6 +1,8 @@
 name: DMIT Premium Monitor
 
 on:
+  push:
+    branches: [main]
   schedule:
     # Two runs per hour, away from the busy top of the hour (UTC and Beijing minute numbers match).
     - cron: '7,37 * * * *'
@@ -27,7 +29,7 @@ jobs:
     env:
       BARK_KEY: ${{ secrets.BARK_KEY }}
       PYTHONUNBUFFERED: '1'
-      MODE: ${{ inputs.mode || 'scan' }}
+      MODE: ${{ github.event_name == 'push' && 'check' || inputs.mode || 'scan' }}
     steps:
       - uses: actions/checkout@v6
         with:
