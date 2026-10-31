@@ -1,69 +1,22 @@
-name: DMIT Premium Monitor
+name: DMIT Premium Monitor - Stopped
 
 on:
   push:
     branches: [main]
-  schedule:
-    # Two runs per hour, away from the busy top of the hour (UTC and Beijing minute numbers match).
-    - cron: '7,37 * * * *'
+    paths: ['.github/workflows/monitor.yml']
   workflow_dispatch:
-    inputs:
-      mode:
-        description: 'test = loud phone test; check = read only; scan = monitor and notify'
-        required: true
-        default: check
-        type: choice
-        options: [check, test, scan]
 
 permissions:
   contents: read
 
 concurrency:
   group: dmit-premium-monitor
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   monitor:
-    # GitHub's IP was blocked by the site during validation. Keep automatic
-    # cloud runs off until a working runtime has been verified explicitly.
-    if: github.event_name == 'workflow_dispatch' || vars.MONITOR_ENABLED == 'true'
+    # Stopped after the user reported being blocked. No requests to DMIT.
+    if: ${{ false }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
-    env:
-      BARK_KEY: ${{ secrets.BARK_KEY }}
-      PYTHONUNBUFFERED: '1'
-      MODE: ${{ github.event_name == 'push' && 'check' || inputs.mode || 'scan' }}
     steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
-          cache: pip
-      - name: Validate push configuration
-        run: |
-          if [ "$MODE" != check ] && [ -z "$BARK_KEY" ]; then
-            echo 'Missing BARK_KEY. Add the repository Actions secret first.'
-            exit 1
-          fi
-      - name: Restore notification state
-        if: env.MODE == 'scan'
-        uses: actions/cache/restore@v5
-        with:
-          path: data/state.json
-          key: dmit-state-v1-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: dmit-state-v1-
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Install browser
-        if: env.MODE != 'test'
-        run: python -m playwright install --with-deps chromium
-      - name: Check stock or test push
-        run: xvfb-run --auto-servernum python monitor.py --mode "$MODE"
-      - name: Save notification state
-        if: always() && env.MODE == 'scan'
-        uses: actions/cache/save@v5
-        with:
-          path: data/state.json
-          key: dmit-state-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      - run: echo "DMIT monitoring is stopped. Do not resume without user instruction."
