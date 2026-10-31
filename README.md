@@ -2,7 +2,7 @@
 
 GitHub Actions 在云端检查 DMIT，iPhone 通过 Bark 响铃。不需要 VPS，电脑可以关机。
 
-**当前交付状态：程序已准备；尚未上传到你的仓库、启用云端监控或验证手机响铃。完成下面的配置和实测后才算启用。**
+**当前交付状态：代码已上传；需要完成云端 check 和手机 test 两项实测，均通过后才算启用。首次云端检查遇到 HTTP 403，正在验证正常浏览器加载。**
 
 ## 已设置的筛选条件
 
@@ -20,7 +20,7 @@ GitHub Actions 在云端检查 DMIT，iPhone 通过 Bark 响铃。不需要 VPS�
 1. 在 App Store 安装 [Bark](https://apps.apple.com/app/bark-custom-notifications/id1403753865)。
 2. 允许通知，并在 Bark 内或 iPhone 的“设置 → 通知 → Bark”允许“重要警告”；也开启声音、锁屏通知。
 3. Bark 首页会显示类似 `https://api.day.app/AbCdEf123456/推送内容` 的个人推送地址。
-4. 取其中 `AbCdEf123456` 这一段作为设备密钥，下一步填入 GitHub Secret。不要把真实密钥写到代码、README、Issue 或仓库文件里。
+4. 复制这条个人链接，下一步直接粘贴到 GitHub Secret；程序会自动提取设备密钥。只填写 `AbCdEf123456` 这一段也可以。不要把真实密钥或链接写到代码、README、Issue 或仓库文件里。
 
 程序使用 `level=critical`、`sound=alarm`、`volume=10`、`call=1`，请求最高音量的重要警告，并让铃声循环约 30 秒。它是推送铃声，不是“时钟”App 的系统闹钟，也不会无限响到你手动关闭。能否绕过静音和专注模式，必须在这台 iPhone 上实际测试。
 
@@ -34,7 +34,7 @@ GitHub Actions 在云端检查 DMIT，iPhone 通过 Bark 响铃。不需要 VPS�
 
 | Name | Secret |
 |---|---|
-| `BARK_KEY` | Bark 首页个人地址里的设备密钥，不是整条 URL |
+| `BARK_KEY` | Bark 首页复制的 `https://api.day.app/…` 个人推送链接，或其中的设备密钥 |
 
 默认使用 Bark 的 `https://api.day.app` 服务。服务器会收到用于发到你的手机的设备密钥和通知内容；不需要 DMIT 密码。程序和日志不会打印密钥。
 
@@ -69,6 +69,8 @@ python -m pip install -r requirements.txt
 python -m playwright install --with-deps chromium
 python monitor.py --mode check
 ```
+
+Linux 无桌面环境时，最后一条命令前加 `xvfb-run --auto-servernum`；或设 `HEADLESS=1`，但不同浏览器模式可能被网站区别对待。
 
 `test_monitor.py` 检查严格价格边界、Premium 范围、真实年费、缺货与未知状态、去重、推送失败重试和连续故障通知。
 

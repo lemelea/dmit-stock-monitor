@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock
+from unittest.mock import patch
 
 import monitor as m
 
@@ -79,6 +80,13 @@ class MonitorTests(unittest.TestCase):
         p = m.push_payload('test', 'test')
         self.assertEqual((p['level'], p['volume'], p['call'], p['sound']), ('critical', '10', '1', 'alarm'))
         self.assertNotIn('call', m.push_payload('error', 'error', critical=False))
+
+    def test_copied_bark_url_and_destination(self):
+        with patch.dict('os.environ', {'BARK_KEY': 'https://api.day.app/AbCd123456/test'}, clear=False):
+            self.assertEqual(m.validate_push_config()[0], 'AbCd123456')
+        with patch.dict('os.environ', {'BARK_KEY': 'https://another.example/AbCd123456/test'}, clear=False):
+            with self.assertRaises(m.CheckError):
+                m.validate_push_config()
 
     def test_three_failures_alert_once_and_recovery(self):
         with tempfile.TemporaryDirectory() as directory:

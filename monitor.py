@@ -91,8 +91,14 @@ def push_payload(title, body, url=CART, critical=True):
 
 def validate_push_config():
     key = os.getenv('BARK_KEY', '').strip()
+    # Accept the copied default Bark URL so phone users need not extract the key.
+    if key.startswith('https://'):
+        address = urlsplit(key)
+        if address.hostname != 'api.day.app' or address.username or address.port not in {None, 443}:
+            raise CheckError('完整推送链接必须来自 https://api.day.app；自建服务请单独配置 BARK_SERVER。')
+        key = address.path.strip('/').split('/')[0]
     if not re.fullmatch(r'[A-Za-z0-9_-]{8,200}', key):
-        raise CheckError('请在 GitHub Actions Secret BARK_KEY 中填写设备密钥，不能填写整条 URL。')
+        raise CheckError('请在 GitHub Actions Secret BARK_KEY 中填写设备密钥或 Bark 首页复制的完整推送链接。')
     server = os.getenv('BARK_SERVER', 'https://api.day.app').rstrip('/')
     parsed = urlsplit(server)
     if parsed.scheme != 'https' or not parsed.hostname or parsed.query or parsed.fragment or parsed.username:
@@ -151,15 +157,19 @@ def collect():
     results = []
     errors = []
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, channel='chromium')
+        browser = p.chromium.launch(headless=os.getenv('HEADLESS', '0') == '1', channel='chromium')
         try:
             context = browser.new_context(locale='en-US')
             page = context.new_page()
             page.set_default_timeout(45000)
             response = page.goto(CART, wait_until='domcontentloaded', timeout=60000)
-            if response and response.status >= 400:
-                raise CheckError(f'购物车返回 HTTP {response.status}，无法判断库存。')
-            page.locator('.cart-products-box[pid] .cart-products-title').first.wait_for(state='attached')
+            # Let an ordinary browser finish normal automatic JS loading before
+            # deciding that an initial HTTP error makes the site unreadable.
+            try:
+                page.locator('.cart-products-box[pid] .cart-products-title').first.wait_for(state='attached')
+            except Exception as error:
+                status = response.status if response else 'unknown'
+                raise CheckError(f'购物车无法加载（HTTP {status}）；页面标题：{page.title()[:100]}。不能判断库存。') from error
             raw = page.evaluate((ROOT / 'extract_catalog.js').read_text(encoding='utf-8'))
             candidates = [r for r in raw if in_scope(r['title'])]
             if not candidates:

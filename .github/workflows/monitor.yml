@@ -55,7 +55,7 @@ jobs:
         if: env.MODE != 'test'
         run: python -m playwright install --with-deps chromium
       - name: Check stock or test push
-        run: python monitor.py --mode "$MODE"
+        run: xvfb-run --auto-servernum python monitor.py --mode "$MODE"
       - name: Save notification state
         if: always() && env.MODE == 'scan'
         uses: actions/cache/save@v5
